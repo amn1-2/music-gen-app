@@ -1,0 +1,18 @@
+fastapi
+uvicorn
+pydantic
+pydub
+torch
+torchaudio
+transformers
+accelerate
+scipy
+sqlalchemy
+alembic
+bcryptpsycopg2-binary  # for PostgreSQL
+soundfile
+passlib[bcrypt]
+python-jose[cryptography]
+email-validator
+pydantic[email]
+python-multipart

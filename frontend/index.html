@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>AI Music Generator</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <style>
+        body {
+            font-family: sans-serif;
+            max-width: 600px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        input, textarea, select, button {
+            width: 100%;
+            margin: 0.5rem 0;
+            padding: 0.5rem;
+        }
+
+        #status {
+            margin-top: 1rem;
+        }
+
+        .error {
+            color: red;
+        }
+
+        a {
+            color: #0066cc;
+        }
+
+        /* Progress bar elements hidden by default */
+        #progressContainer, #progressText {
+            display: none;
+        }
+
+        .progress-container {
+            width: 100%;
+            background-color: #f0f0f0;
+            border: 2px solid #333;
+            border-radius: 5px;
+            margin-top: 10px;
+            height: 25px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            width: 0%;
+            background-color: #4CAF50;
+            transition: width 0.4s ease;
+        }
+
+        #progressText {
+            margin-top: 5px;
+            font-weight: bold;
+        }
+
+        /* Style for disabled button */
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+
+<h1>🎵 AI Music Generator</h1>
+
+<form id="genForm">
+
+<label>Title for your music:</label>
+<input type="text" id="title" value="My Track" required>
+
+<label>Describe your music:</label>
+<textarea id="prompt" rows="3" required>upbeat electronic dance track with synth melody</textarea>
+
+<label>Duration (seconds):</label>
+<input type="number" id="duration" value="30" min="5" max="300" required>
+
+<label>Model size:</label>
+<select id="modelSize">
+    <option value="small">Small (fast)</option>
+    <option value="medium" selected>Medium (balanced)</option>
+    <option value="large">Large (best quality)</option>
+</select>
+
+<button type="submit" id="submitBtn">Generate Music</button>
+
+</form>
+
+<div id="status"></div>
+
+<div id="progressContainer" class="progress-container">
+    <div id="progressFill" class="progress-fill"></div>
+</div>
+
+<div id="progressText"></div>
+
+<script>
+const form = document.getElementById('genForm');
+const submitBtn = document.getElementById('submitBtn');
+const statusDiv = document.getElementById('status');
+const progressContainer = document.getElementById('progressContainer');
+const progressFill = document.getElementById('progressFill');
+const progressText = document.getElementById('progressText');
+
+form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    // Disable button to prevent double submission
+    submitBtn.disabled = true;
+
+    // Reset UI elements
+    statusDiv.innerHTML = "⏳ Starting generation...";
+    progressFill.style.width = "0%";
+    progressText.innerHTML = "Progress: 0%";
+    progressContainer.style.display = 'block';
+    progressText.style.display = 'block';
+
+    const title = document.getElementById('title').value;
+    const prompt = document.getElementById('prompt').value;
+    const duration = parseInt(document.getElementById('duration').value);
+    const modelSize = document.getElementById('modelSize').value;
+
+    try {
+        const resp = await fetch('http://localhost:8000/generate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ prompt, title, duration, model_size: modelSize })
+        });
+
+        if (!resp.ok) {
+            throw new Error(`Server responded with ${resp.status}`);
+        }
+
+        const data = await resp.json();
+        const jobId = data.job_id;
+
+        const poll = setInterval(async () => {
+            try {
+                const statusResp = await fetch(`http://localhost:8000/status/${jobId}`);
+                if (!statusResp.ok) {
+                    throw new Error(`Status check failed: ${statusResp.status}`);
+                }
+                const status = await statusResp.json();
+
+                console.log("Backend status:", status);
+
+                let message = "";
+
+                if (status.status === "loading_model") {
+                    message = "⏳ Downloading model (first run only)...";
+                } else if (status.status === "generating") {
+                    message = "🎵 Generating music...";
+                } else if (status.status === "saving") {
+                    message = "💾 Saving file...";
+                } else if (status.status === "completed") {
+                    message = `✅ Done! <a href="http://localhost:8000/download/${jobId}" download>Download MP4</a>`;
+                    clearInterval(poll);
+                    submitBtn.disabled = false; // Re-enable button
+                    // Keep progress bar visible at 100% – optional, you could hide it
+                } else if (status.status === "failed") {
+                    message = `<span class="error">❌ Failed: ${status.error}</span>`;
+                    clearInterval(poll);
+                    submitBtn.disabled = false;
+                    // Hide progress bar on failure
+                    progressContainer.style.display = 'none';
+                    progressText.style.display = 'none';
+                } else {
+                    message = `Status: ${status.status}, Progress: ${status.progress}%`;
+                }
+
+                // Convert progress to number (handle string or number)
+                let progress = parseFloat(status.progress);
+                if (isNaN(progress)) progress = 0;
+
+                // Update progress bar width with raw value (smooth)
+                progressFill.style.width = progress + "%";
+
+                // Update text with two decimal places
+                progressText.innerHTML = `Progress: ${progress.toFixed(2)}%`;
+
+                if (status.elapsed) {
+                    message += `<br>Elapsed: ${status.elapsed}s`;
+                }
+
+                statusDiv.innerHTML = message;
+
+                // If completed, we don't hide bar, but you could if you want
+                // If you prefer to hide on completion, uncomment next lines:
+                // if (status.status === 'completed') {
+                //     progressContainer.style.display = 'none';
+                //     progressText.style.display = 'none';
+                // }
+
+            } catch (err) {
+                console.error('Polling error:', err);
+                statusDiv.innerHTML = `<span class="error">Error: ${err.message}</span>`;
+                clearInterval(poll);
+                submitBtn.disabled = false;
+                // Hide progress bar on polling error
+                progressContainer.style.display = 'none';
+                progressText.style.display = 'none';
+            }
+        }, 2000);
+
+    } catch (err) {
+        console.error('Submission error:', err);
+        statusDiv.innerHTML = `<span class="error">Error: ${err.message}</span>`;
+        submitBtn.disabled = false;
+        // Hide progress bar on submission error
+        progressContainer.style.display = 'none';
+        progressText.style.display = 'none';
+    }
+});
+</script>
+
+</body>
+</html>

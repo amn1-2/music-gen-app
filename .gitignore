@@ -1,0 +1,27 @@
+# Python
+venv/
+venv311/
+__pycache__/
+*.pyc
+*.pyo
+*.db
+
+# Outputs
+outputs/
+
+# Flutter
+**/doc/api/
+**/ios/Flutter/.last_build_id
+.dart_tool/
+.flutter-plugins-dependencies
+.pub-cache/
+.pub/
+/build/
+/coverage/
+
+# IDE
+.idea/
+.vscode/
+
+# OS
+.DS_Store
