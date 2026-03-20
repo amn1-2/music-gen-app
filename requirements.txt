@@ -9,7 +9,8 @@ accelerate
 scipy
 sqlalchemy
 alembic
-bcryptpsycopg2-binary  # for PostgreSQL
+bcrypt
+psycopg2-binary # for PostgreSQL
 soundfile
 passlib[bcrypt]
 python-jose[cryptography]
