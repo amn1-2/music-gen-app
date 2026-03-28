@@ -16,9 +16,9 @@ if not REPLICATE_API_TOKEN:
 
 # Model versions for different sizes (from Replicate's musicgen model)
 MODEL_VERSIONS = {
-    "small": "meta/musicgen:0f283b4418a2a0eef96bb25cbe45d9e6dde17a8f715c53d9a2cfe43f10573463",
-    "medium": "meta/musicgen:6bd5c77ddf572d09f223e7459ec823a7edb636922d525b8a1c6f474122ed3839",
-    "large": "meta/musicgen:675398c3e32e8c221cffac631c1f5d0010aeb3b0b3f1b92b722e0af11010e999"
+    "small": "671ac645ce5e552cc63a54a2bbff63fcf798043055d2dac5fc9e36a837eedcfb",
+    "medium": "cec9c5f2d56a6c51fdb65a030c056232a5aecfab0e340f507613c62a25c5f64a",
+    "large": "4c8ea2adc06b7aa46e2496b884f2524371859a27f91fbf5f20c337ac5eb88279"
 }
 
 def get_unique_filename_in_dir(directory: str, base_name: str, extension: str) -> str:
