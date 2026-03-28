@@ -4,6 +4,10 @@ import torch
 OUTPUT_DIR = "outputs"
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
+REPLICATE_API_TOKEN = os.getenv("REPLICATE_API_TOKEN")
+if not REPLICATE_API_TOKEN:
+    raise ValueError("REPLICATE_API_TOKEN environment variable not set")
+
 # JWT settings
 SECRET_KEY = os.getenv("SECRET_KEY", "fallback-dev-key")
 ALGORITHM = "HS256"

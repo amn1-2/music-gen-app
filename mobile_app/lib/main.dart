@@ -2,12 +2,18 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart'; // for kReleaseMode
 import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+
+// Global base URL – switches automatically
+const String baseUrl = kReleaseMode
+    ? 'https://musicgen-backend-rm7c.onrender.com'
+    : 'http://localhost:8000';
 
 void main() => runApp(const MyApp());
 
@@ -72,7 +78,6 @@ class _AuthWrapperState extends State<AuthWrapper> {
 
 // ---------- Auth Service ----------
 class AuthService {
-  static const String baseUrl = 'http://localhost:8000'; // adjust for device
   final storage = const FlutterSecureStorage();
 
   Future<bool> register(String username, String email, String password) async {
@@ -378,8 +383,6 @@ class _MusicGeneratorScreenState extends State<MusicGeneratorScreen>
   String? _jobId;
   Timer? _pollTimer;
 
-  final String _baseUrl = 'http://localhost:8000'; // adjust for device
-
   @override
   bool get wantKeepAlive => true;
 
@@ -412,7 +415,7 @@ class _MusicGeneratorScreenState extends State<MusicGeneratorScreen>
       final auth = AuthService();
       final headers = await auth.authHeaders;
       final response = await http.post(
-        Uri.parse('$_baseUrl/generate'),
+        Uri.parse('$baseUrl/generate'),
         headers: headers,
         body: jsonEncode({
           'title': title,
@@ -448,7 +451,7 @@ class _MusicGeneratorScreenState extends State<MusicGeneratorScreen>
       final auth = AuthService();
       final headers = await auth.authHeaders;
       final response = await http.get(
-        Uri.parse('$_baseUrl/status/$_jobId'),
+        Uri.parse('$baseUrl/status/$_jobId'),
         headers: headers,
       );
       if (response.statusCode != 200) {
@@ -477,7 +480,6 @@ class _MusicGeneratorScreenState extends State<MusicGeneratorScreen>
           _isLoading = false;
           _statusMessage = '✅ Done!';
         });
-        // Refresh library if callback provided
         widget.onTrackGenerated?.call();
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Track saved! Check My Music.')),
@@ -626,7 +628,6 @@ class _MusicLibraryScreenState extends State<MusicLibraryScreen> {
   List<Track> _tracks = [];
   bool _isLoading = true;
   final AudioPlayer _audioPlayer = AudioPlayer();
-  final String _baseUrl = 'http://localhost:8000'; // adjust for device
 
   @override
   void initState() {
@@ -646,7 +647,7 @@ class _MusicLibraryScreenState extends State<MusicLibraryScreen> {
       final auth = AuthService();
       final headers = await auth.authHeaders;
       final response = await http.get(
-        Uri.parse('$_baseUrl/my-tracks'),
+        Uri.parse('$baseUrl/my-tracks'),
         headers: headers,
       );
       if (response.statusCode == 200) {
@@ -676,7 +677,7 @@ class _MusicLibraryScreenState extends State<MusicLibraryScreen> {
       final auth = AuthService();
       final headers = await auth.authHeaders;
       final response = await http.delete(
-        Uri.parse('$_baseUrl/tracks/${track.jobId}'),
+        Uri.parse('$baseUrl/tracks/${track.jobId}'),
         headers: headers,
       );
       print('Delete response: ${response.statusCode} ${response.body}');
@@ -703,14 +704,12 @@ class _MusicLibraryScreenState extends State<MusicLibraryScreen> {
     try {
       final auth = AuthService();
       final headers = await auth.authHeaders;
-      final downloadUrl = '$_baseUrl/download/${track.jobId}';
+      final downloadUrl = '$baseUrl/download/${track.jobId}';
 
-      // Show a loading indicator (optional)
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Preparing file for sharing...')),
       );
 
-      // Download the file to a temporary location
       final response = await http.get(Uri.parse(downloadUrl), headers: headers);
       if (response.statusCode != 200) throw Exception('Download failed');
 
@@ -720,12 +719,10 @@ class _MusicLibraryScreenState extends State<MusicLibraryScreen> {
 
       if (!await tempFile.exists()) throw Exception('File not saved');
 
-      // Share the file using share_plus
       await Share.shareXFiles([
         XFile(tempFile.path),
       ], text: 'Check out my AI generated track: ${track.title}');
 
-      // Optionally delete the temp file after sharing (uncomment if you want to clean up)
       tempFile.delete();
     } catch (e) {
       ScaffoldMessenger.of(
@@ -738,7 +735,7 @@ class _MusicLibraryScreenState extends State<MusicLibraryScreen> {
     try {
       final auth = AuthService();
       final headers = await auth.authHeaders;
-      final downloadUrl = '$_baseUrl/download/${track.jobId}';
+      final downloadUrl = '$baseUrl/download/${track.jobId}';
       final response = await http.get(Uri.parse(downloadUrl), headers: headers);
       if (response.statusCode != 200) throw Exception('Download failed');
 
@@ -857,7 +854,6 @@ class _AudioPlayerSheetState extends State<_AudioPlayerSheet> {
     _positionSubscription = widget.audioPlayer.onPositionChanged.listen((p) {
       if (mounted) {
         setState(() {
-          // Clamp position to non-negative
           _position = Duration(
             milliseconds: p.inMilliseconds.clamp(0, _duration.inMilliseconds),
           );
@@ -893,7 +889,6 @@ class _AudioPlayerSheetState extends State<_AudioPlayerSheet> {
 
   @override
   Widget build(BuildContext context) {
-    // Ensure slider value is within [0, duration]
     final double sliderValue = _position.inMilliseconds.toDouble().clamp(
       0,
       _duration.inMilliseconds.toDouble(),
@@ -915,9 +910,7 @@ class _AudioPlayerSheetState extends State<_AudioPlayerSheet> {
           const SizedBox(height: 16),
           Slider(
             value: sliderValue,
-            max: maxValue > 0
-                ? maxValue
-                : 1.0, // avoid max=0 to prevent division by zero (though slider handles it)
+            max: maxValue > 0 ? maxValue : 1.0,
             onChanged: (value) {
               widget.audioPlayer.seek(Duration(milliseconds: value.toInt()));
             },

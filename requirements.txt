@@ -2,18 +2,20 @@ fastapi
 uvicorn
 pydantic
 pydub
-torch
-torchaudio
-transformers
-accelerate
-scipy
+#torch
+#torchaudio
+#transformers
+#accelerate
+#scipy
 sqlalchemy
 alembic
 bcrypt
-psycopg2-binary # for PostgreSQL
+psycopg2-binary
 soundfile
 passlib[bcrypt]
 python-jose[cryptography]
 email-validator
 pydantic[email]
 python-multipart
+replicate
+requests

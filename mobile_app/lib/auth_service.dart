@@ -1,9 +1,12 @@
 import 'dart:convert';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
+import 'package:flutter/foundation.dart';
 
 class AuthService {
-  static const String baseUrl = 'http://localhost:8000'; // adjust for device
+  static const String baseUrl = kReleaseMode
+      ? 'https://musicgen-backend-rm7c.onrender.com'
+      : 'http://localhost:8000'; // adjust for device
   final storage = const FlutterSecureStorage();
 
   Future<bool> register(String username, String email, String password) async {
