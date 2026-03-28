@@ -15,11 +15,8 @@ if not REPLICATE_API_TOKEN:
     raise ValueError("REPLICATE_API_TOKEN environment variable not set")
 
 # Model versions for different sizes (from Replicate's musicgen model)
-MODEL_VERSIONS = {
-    "small": "671ac645ce5e552cc63a54a2bbff63fcf798043055d2dac5fc9e36a837eedcfb",
-    "medium": "cec9c5f2d56a6c51fdb65a030c056232a5aecfab0e340f507613c62a25c5f64a",
-    "large": "4c8ea2adc06b7aa46e2496b884f2524371859a27f91fbf5f20c337ac5eb88279"
-}
+MODEL_VERSION = "671ac645ce5e552cc63a54a2bbff63fcf798043055d2dac5fc9e36a837eedcfb"
+
 
 def get_unique_filename_in_dir(directory: str, base_name: str, extension: str) -> str:
     original_name = base_name
