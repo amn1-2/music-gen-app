@@ -45,10 +45,11 @@ def _generate_sync(job_id: str, prompt: str, title: str, duration: int, model_si
         db.commit()
 
         # Map app's model_size to Replicate's model_version
+        # Map app's model_size to Replicate's model_version
         if model_size == "large":
-            model_version_param = "stereo-large"
-        else:  # small or medium -> use stereo-music
-            model_version_param = "stereo-music"
+           model_version_param = "large"
+        else:  # small or medium -> use stereo-large
+           model_version_param = "stereo-large"
 
         # Prepare input for Replicate
         input_params = {
