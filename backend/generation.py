@@ -44,14 +44,17 @@ def _generate_sync(job_id: str, prompt: str, title: str, duration: int, model_si
         job.started_at = datetime.utcnow()
         db.commit()
 
-        # Use the single model version (the same for all sizes)
-        model_version = MODEL_VERSION
+        # Map app's model_size to Replicate's model_version
+        if model_size == "large":
+            model_version_param = "stereo-large"
+        else:  # small or medium -> use stereo-music
+            model_version_param = "stereo-music"
 
-        # Prepare input for Replicate (include model_size)
+        # Prepare input for Replicate
         input_params = {
             "prompt": prompt,
             "duration": duration,
-            "model_size": model_size,   # <-- this tells Replicate which variant
+            "model_version": model_version_param,
             "temperature": 0.7,
             "top_p": 0.95,
             "top_k": 250,
@@ -59,10 +62,10 @@ def _generate_sync(job_id: str, prompt: str, title: str, duration: int, model_si
 
         # Start prediction on Replicate
         print(f"Job {job_id}: Starting prediction on Replicate...")
-        prediction = replicate.run(
-    "meta/musicgen",
-    input=input_params
-)
+        prediction = replicate.predictions.create(
+            version=MODEL_VERSION,
+            input=input_params
+        )
 
         # Poll until completed
         while prediction.status in ("starting", "processing"):
