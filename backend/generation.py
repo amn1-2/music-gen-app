@@ -59,10 +59,10 @@ def _generate_sync(job_id: str, prompt: str, title: str, duration: int, model_si
 
         # Start prediction on Replicate
         print(f"Job {job_id}: Starting prediction on Replicate...")
-        prediction = replicate.predictions.create(
-            version=model_version,
-            input=input_params
-        )
+        prediction = replicate.run(
+    "meta/musicgen",
+    input=input_params
+)
 
         # Poll until completed
         while prediction.status in ("starting", "processing"):
