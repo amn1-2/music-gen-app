@@ -55,6 +55,7 @@ def _generate_sync(job_id: str, prompt: str, title: str, duration: int, model_si
         input_params = {
             "prompt": prompt,
             "duration": duration,
+            "model_size": model_size,  
             "temperature": 0.7,
             "top_p": 0.95,
             "top_k": 250,
